@@ -7,7 +7,7 @@ from django.db import models
 class User(AbstractUser):
     pass
 
-class Task(models.model):
+class Task(models.Model):
     # task needs a title
     # a description
     # a complete or not complete logic
