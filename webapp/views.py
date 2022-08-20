@@ -81,11 +81,11 @@ def login_view(request):
             login(request, user)
             return HttpResponseRedirect(reverse("index"))
         else:
-            return render(request, "todolist/login.html", {
+            return render(request, "webapp/login.html", {
                 "message": "Sorry, mate. Either this isn't you or you don't have an account."
             })
     else:
-        return render(request, "todolist/login.html")
+        return render(request, "webapp/login.html")
     
 @login_required
 def logout_view(request):
