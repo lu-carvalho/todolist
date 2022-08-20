@@ -1,0 +1,38 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>{% block title %} TO DO LIST {% endblock %}</title>
+        <!-- to be changed -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link href="{% static 'auctions/styles.css' %}" rel="stylesheet">
+    </head>
+    <body>
+        <h1> To do list web app </h1>
+        <div>
+            {% if user.is_authenticated %}
+                Signed in as <strong> {{ user.username }} </strong>.
+            {% else %}
+                Not sigend in.
+            {% endif %}
+        </div>
+        <ul class="nav">
+            {% if user.is_authenticated %}
+                <li>
+                    <a class="nav-item" href="{% url 'logout' %}">Log Out</a>
+                 </li>
+            {% else %}
+                <li class="nav-item">
+                    <a class="nav-item" href="{% url 'login' %}">Log In</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-item" href="{% url 'register' %}">Register</a>
+                </li>
+            {% endif %}
+        </ul>
+        <hr>
+        {% block body %}
+        {% endblock %}
+    </body>
+</html>
