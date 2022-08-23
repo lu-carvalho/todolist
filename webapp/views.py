@@ -6,37 +6,58 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django import forms
 from django.core.exceptions import ObjectDoesNotExist
+from django.views.generic.list import ListView
 
 from .models import *
 
-# I will need a login page, which contains only the login form
-# Also needs a register page
-# The logout page will redirect me to the login page
-# After loging in, the user will have only one view: the main view of his to-do list
-# It must contain a logout rediret button 
-# it will be compound of a rectangule (?) on the midle (g luck centering this div haha), in which he can: 
-# 1) add new tasks
-    # form is needed. 
-# 2) view the tasks
-# 3) if the task is marked as complete, it will turn green, fade, italic and crossed
-# 4) edit the task
-# 5) delete the task
-# 6) if all tasks are complete: think of a happy face or something like that 
-# maybe implement some other features like adding time to be spent on each task, smthg like that
-# for my models, I only will need the User one, that is provided by Django and a task model
+# ---------------------- #
+#          Form          #
+# ---------------------- #
 
-# # # # # # # # # 
-#     FORMS     #
-# # # # # # # # # 
+class TaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        exclude = ["user"]
+        widgets = {"description": forms.Textarea(attrs={"placeholder": "Description", "rows": 1})}
 
+# ---------------------- #
+#          Views         #
+# ---------------------- # 
 
-# # # # # # # # # 
-#     VIEWS     #
-# # # # # # # # # 
-
-#TO BE DONE
 def index(request):
-    pass
+    if request.user.is_authenticated:
+
+        user = User.objects.get(id=request.user.id)
+        tasks = Task.objects.filter(user=user)
+
+        return render(request, "webapp/index.html", {
+            "tasks": tasks,
+            "add_taskForm": TaskForm()
+        })
+    
+    # if user is not authenticated, redirect to the login page
+    return HttpResponseRedirect(reverse("login"))
+
+@login_required
+def add_task(request):
+
+    # Handles logic to add new task, only takes POST method #
+    form = TaskForm(request.POST)
+
+    if request.method == "POST":
+        if form.is_valid():
+            title = form.cleaned_data["title"]
+            description = form.cleaned_data["description"]
+            complete = form.cleaned_data["complete"]
+
+            task = Task(
+                user=User.objects.get(id=request.user.id),
+                title = title,
+                description = description,
+                complete = complete
+            )
+            task.save()
+    return HttpResponseRedirect(reverse("login"))
 
 def register(request):
     # for the register view, I need an html very similar to the login one, that receives a "message" variable
@@ -61,14 +82,19 @@ def register(request):
                 "message": "Sorry, mate. This username is so good it is already taken. Try another!"
             })
 
-        # If the registering works, take user to login page. 
-        return(HttpResponseRedirect(reverse("login")))
+        # If the registering works, take user to index page.
+        login(request, user) 
+        return(HttpResponseRedirect(reverse("index")))
 
     else:
         return render(request, "webapp/register.html")
 
 def login_view(request):
-    # for the login view I have to create an login.html template that displays the authentication form and accepts a message (Remember to add the "if empty" in case there is no message)
+
+    #if the user is already logged in, redirect to index page
+    if request.user.is_authenticated:
+        return HttpResponseRedirect(reverse("index"))
+
     if request.method == "POST":
         
         # Authenticate the user
@@ -86,9 +112,57 @@ def login_view(request):
             })
     else:
         return render(request, "webapp/login.html")
-    
+ 
 @login_required
-def logout_view(request):
-    # Logically, login is required to logout 
-    logout(request)
+def task_view(request, task_id):
+    
+    try:
+        task = Task.objects.get(pk=task_id)
+    except Task.DoesNotExist:
+        return render(request, "webapp/error.html", { 
+            "code": 404,
+            "message": "That's not a task... Yet!"
+        })
+
+    if request.user.id != task.user.id:
+        return render(request, "webapp/error.html", {
+            "code": 404,
+            "message": "That's not a task... Yet!"
+        })     
+
+    form = TaskForm(instance = task)
+
+    if request.method == "POST":
+        form = TaskForm(request.POST, instance = task)
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse("index"))
+
+    else: 
+        return render(request, "webapp/task_view.html", {
+            "task": task,
+            "form": form
+        })
+
+@login_required
+def delete_task(request, task_id):
+    try:
+        task = Task.objects.get(pk=task_id)
+    except Task.DoesNotExist:
+        return render(request, "webapp/error.html", { 
+            "code": 404,
+            "message": "That's not a task... Yet!"
+        })
+
+    if request.user.id != task.user.id:
+        return render(request, "webapp/error.html", {
+            "code": 404,
+            "message": "That's not a task... Yet!"
+        })
+
+    task.delete()
     return HttpResponseRedirect(reverse("index"))
+
+def logout_view(request):
+    logout(request)
+    return HttpResponseRedirect(reverse("login"))

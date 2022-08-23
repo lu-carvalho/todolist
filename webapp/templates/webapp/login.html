@@ -8,7 +8,7 @@
         <div>{{ message }}</div>
     {% endif %}
 
-    <form action="{% url 'login' %}" method="post">
+    <form action="{% url 'login' %}" method="post" class="d-grid gap-2 col-4 mx-auto">
         {% csrf_token %}
         <div class="form-group">
             <input autofocus class="form-control" type="text" name="username" placeholder="username">
@@ -16,7 +16,9 @@
         <div class="form-group">
             <input class="form-control" type="password" name="password" placeholder="password">
         </div>
-        <input class="btn btn-primary" type="submit" value="login">
+        <div class="d-grid gap-2 col-6 mx-auto">
+            <input class="btn btn-secondary" type="submit" value="login">
+        </div>
     </form>
 
     Don't have an account yet?! Say no more: <a href="{% url 'register' %}">register here</a>!
